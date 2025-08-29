@@ -128,13 +128,13 @@ export default function TeacherList({ teachers }: TeacherListProps) {
                 </div>
                 <div className="flex gap-3">
                   <Link
-                    href={`/teachers/${teacher.id}`}
+                    href={`/teachers/${teacher.userId}`}
                     className="btn btn-secondary"
                   >
                     View Profile
                   </Link>
                   <Link
-                    href={`/teachers/${teacher.id}/book`}
+                    href={`/teachers/${teacher.userId}/book`}
                     className="btn btn-primary"
                   >
                     Book Lesson
