@@ -1,9 +1,8 @@
 import Link from "next/link"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth"
 
 export default async function HomePage() {
-  const session = await getServerSession(authOptions)
+  // TODO: Add session check with NextAuth v5
+  const session = null
 
   return (
     <>
