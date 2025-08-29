@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import AuthSessionProvider from "@/components/providers/session-provider";
+import LaunchBanner from "@/components/ui/launch-banner";
 
 export const metadata: Metadata = {
   title: "Kibzee - Where Music Lives",
@@ -25,6 +26,7 @@ export default function RootLayout({
     <html lang="en">
       <body className="antialiased">
         <AuthSessionProvider>
+          <LaunchBanner />
           {children}
         </AuthSessionProvider>
       </body>
