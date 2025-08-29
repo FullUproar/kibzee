@@ -1,4 +1,5 @@
 import Link from "next/link"
+import LaunchBanner from "@/components/ui/launch-banner"
 
 export default async function HomePage() {
   // TODO: Add session check with NextAuth v5
@@ -6,8 +7,10 @@ export default async function HomePage() {
 
   return (
     <>
+      <LaunchBanner />
+      
       {/* Navigation */}
-      <nav className="fixed w-full top-0 bg-paper/90 backdrop-blur-md z-50 border-b border-dust">
+      <nav className="fixed w-full top-16 bg-paper/90 backdrop-blur-md z-50 border-b border-dust">
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center h-16">
             <Link href="/" className="text-2xl font-serif text-ink">
@@ -39,7 +42,7 @@ export default async function HomePage() {
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-24 pb-16 px-4">
+      <section className="pt-36 pb-16 px-4">
         <div className="container mx-auto">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className="animate-in">
