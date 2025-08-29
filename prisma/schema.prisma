@@ -1,0 +1,412 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  STUDENT
+  TEACHER
+  ADMIN
+  SUPPORT
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  BANNED
+  PENDING_VERIFICATION
+}
+
+enum LessonFormat {
+  IN_PERSON
+  ONLINE
+  BOTH
+}
+
+enum ExperienceLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  DISPUTED
+}
+
+enum VerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
+model User {
+  id                    String          @id @default(cuid())
+  email                 String          @unique
+  emailVerified         DateTime?
+  password              String?
+  name                  String?
+  image                 String?
+  role                  UserRole        @default(STUDENT)
+  status                UserStatus      @default(PENDING_VERIFICATION)
+  phoneNumber           String?
+  phoneVerified         Boolean         @default(false)
+  twoFactorEnabled      Boolean         @default(false)
+  twoFactorSecret       String?
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+  lastLoginAt           DateTime?
+  
+  // Relations
+  accounts              Account[]
+  sessions              Session[]
+  studentProfile        StudentProfile?
+  teacherProfile        TeacherProfile?
+  sentMessages          Message[]       @relation("MessageSender")
+  receivedMessages      Message[]       @relation("MessageReceiver")
+  studentBookings       Booking[]       @relation("StudentBookings")
+  teacherBookings       Booking[]       @relation("TeacherBookings")
+  reviewsGiven          Review[]        @relation("ReviewAuthor")
+  reviewsReceived       Review[]        @relation("ReviewSubject")
+  payments              Payment[]
+  notifications         Notification[]
+  reports               Report[]        @relation("Reporter")
+  reportsAgainst        Report[]        @relation("Reported")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model StudentProfile {
+  id                  String            @id @default(cuid())
+  userId              String            @unique
+  bio                 String?           @db.Text
+  location            String?
+  zipCode             String?
+  dateOfBirth         DateTime?
+  parentId            String?
+  instrumentsInterest String[]
+  experienceLevel     ExperienceLevel   @default(BEGINNER)
+  preferredFormat     LessonFormat      @default(BOTH)
+  budgetMin           Int?
+  budgetMax           Int?
+  travelRadius        Int?              @default(10) // miles
+  availableDays       String[]          // JSON array of days
+  availableTimes      Json?             // JSON object with time preferences
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  
+  // Relations
+  user                User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  savedTeachers       SavedTeacher[]
+  searchAlerts        SearchAlert[]
+}
+
+model TeacherProfile {
+  id                    String              @id @default(cuid())
+  userId                String              @unique
+  bio                   String              @db.Text
+  yearsExperience       Int
+  address               String?
+  city                  String
+  state                 String
+  zipCode               String
+  latitude              Float?
+  longitude             Float?
+  instrumentsTaught     String[]
+  teachingStyles        String[]
+  ageGroups             String[]
+  languages             String[]
+  education             Json?               // JSON array of education entries
+  certifications        Json?               // JSON array of certifications
+  performanceExperience Json?               // JSON object with performance details
+  awards                Json?               // JSON array of awards
+  introVideoUrl         String?
+  performanceVideos     Json?               // JSON array of video URLs
+  audioSamples          Json?               // JSON array of audio URLs
+  teachingSpacePhotos   Json?               // JSON array of photo URLs
+  weeklySchedule        Json                // JSON object with availability
+  lessonDurations       Int[]               @default([30, 45, 60])
+  advanceBookingDays    Int                 @default(30)
+  vacationMode          Boolean             @default(false)
+  trialLessonRate       Int?
+  cancellationPolicy    String?             @db.Text
+  backgroundCheckStatus VerificationStatus  @default(PENDING)
+  identityVerified      Boolean             @default(false)
+  insuranceVerified     Boolean             @default(false)
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+  
+  // Relations
+  user                  User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rates                 TeacherRate[]
+  packages              TeacherPackage[]
+  savedByStudents       SavedTeacher[]
+  verification          TeacherVerification?
+}
+
+model TeacherRate {
+  id              String         @id @default(cuid())
+  teacherProfileId String
+  instrument      String?
+  duration        Int            // in minutes
+  price           Int            // in cents
+  groupRate       Boolean        @default(false)
+  maxGroupSize    Int?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  
+  teacherProfile  TeacherProfile @relation(fields: [teacherProfileId], references: [id], onDelete: Cascade)
+  
+  @@unique([teacherProfileId, instrument, duration, groupRate])
+}
+
+model TeacherPackage {
+  id              String         @id @default(cuid())
+  teacherProfileId String
+  name            String
+  description     String?
+  lessons         Int
+  duration        Int            // per lesson in minutes
+  price           Int            // total in cents
+  expiryDays      Int?           // null means no expiry
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  
+  teacherProfile  TeacherProfile @relation(fields: [teacherProfileId], references: [id], onDelete: Cascade)
+}
+
+model TeacherVerification {
+  id                    String             @id @default(cuid())
+  teacherProfileId      String             @unique
+  governmentIdStatus    VerificationStatus @default(PENDING)
+  governmentIdUrl       String?
+  backgroundCheckStatus VerificationStatus @default(PENDING)
+  backgroundCheckDate   DateTime?
+  backgroundCheckUrl    String?
+  addressVerified       Boolean            @default(false)
+  referencesProvided    Json?              // JSON array of references
+  referencesVerified    Boolean            @default(false)
+  insuranceStatus       VerificationStatus @default(PENDING)
+  insuranceDocument     String?
+  insuranceExpiry       DateTime?
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+  
+  teacherProfile        TeacherProfile     @relation(fields: [teacherProfileId], references: [id], onDelete: Cascade)
+}
+
+model SavedTeacher {
+  id               String         @id @default(cuid())
+  studentProfileId String
+  teacherProfileId String
+  createdAt        DateTime       @default(now())
+  
+  studentProfile   StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  teacherProfile   TeacherProfile @relation(fields: [teacherProfileId], references: [id], onDelete: Cascade)
+  
+  @@unique([studentProfileId, teacherProfileId])
+}
+
+model SearchAlert {
+  id               String         @id @default(cuid())
+  studentProfileId String
+  name             String
+  criteria         Json           // JSON object with search criteria
+  frequency        String         // daily, weekly, instant
+  lastSentAt       DateTime?
+  active           Boolean        @default(true)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  
+  studentProfile   StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+}
+
+model Booking {
+  id               String        @id @default(cuid())
+  studentId        String
+  teacherId        String
+  instrument       String
+  lessonDate       DateTime
+  duration         Int           // in minutes
+  format           LessonFormat
+  location         String?       // for in-person lessons
+  price            Int           // in cents
+  platformFee      Int           // in cents (5% of price)
+  status           BookingStatus @default(PENDING)
+  notes            String?       @db.Text
+  recurringId      String?       // for recurring lessons
+  packageId        String?       // if part of a package
+  trialLesson      Boolean       @default(false)
+  cancelledAt      DateTime?
+  cancelledBy      String?
+  cancellationReason String?
+  completedAt      DateTime?
+  disputedAt       DateTime?
+  disputeReason    String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  
+  // Relations
+  student          User          @relation("StudentBookings", fields: [studentId], references: [id])
+  teacher          User          @relation("TeacherBookings", fields: [teacherId], references: [id])
+  payment          Payment?
+  review           Review?
+  messages         Message[]
+  lessonNotes      LessonNote[]
+}
+
+model Payment {
+  id                String   @id @default(cuid())
+  bookingId         String   @unique
+  userId            String
+  stripePaymentId   String?  @unique
+  stripeChargeId    String?
+  amount            Int      // in cents
+  platformFee       Int      // in cents
+  teacherPayout     Int      // in cents
+  status            String   // pending, authorized, captured, refunded, failed
+  authorizedAt      DateTime?
+  capturedAt        DateTime?
+  refundedAt        DateTime?
+  refundAmount      Int?
+  failureReason     String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  // Relations
+  booking           Booking  @relation(fields: [bookingId], references: [id])
+  user              User     @relation(fields: [userId], references: [id])
+}
+
+model Review {
+  id          String   @id @default(cuid())
+  bookingId   String   @unique
+  authorId    String
+  subjectId   String
+  rating      Int      // 1-5
+  comment     String?  @db.Text
+  recommend   Boolean  @default(true)
+  response    String?  @db.Text
+  respondedAt DateTime?
+  helpful     Int      @default(0)
+  verified    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  booking     Booking  @relation(fields: [bookingId], references: [id])
+  author      User     @relation("ReviewAuthor", fields: [authorId], references: [id])
+  subject     User     @relation("ReviewSubject", fields: [subjectId], references: [id])
+}
+
+model Message {
+  id           String   @id @default(cuid())
+  senderId     String
+  receiverId   String
+  bookingId    String?
+  content      String   @db.Text
+  attachments  Json?    // JSON array of attachment URLs
+  read         Boolean  @default(false)
+  readAt       DateTime?
+  createdAt    DateTime @default(now())
+  
+  // Relations
+  sender       User     @relation("MessageSender", fields: [senderId], references: [id])
+  receiver     User     @relation("MessageReceiver", fields: [receiverId], references: [id])
+  booking      Booking? @relation(fields: [bookingId], references: [id])
+  
+  @@index([senderId, receiverId])
+}
+
+model LessonNote {
+  id          String   @id @default(cuid())
+  bookingId   String
+  teacherId   String
+  content     String   @db.Text
+  homework    String?  @db.Text
+  progress    String?  @db.Text
+  attachments Json?    // JSON array of attachment URLs
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  booking     Booking  @relation(fields: [bookingId], references: [id])
+}
+
+model Notification {
+  id         String   @id @default(cuid())
+  userId     String
+  type       String   // message, booking, payment, review, etc.
+  title      String
+  content    String
+  data       Json?    // Additional data for the notification
+  read       Boolean  @default(false)
+  readAt     DateTime?
+  createdAt  DateTime @default(now())
+  
+  // Relations
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId, read])
+}
+
+model Report {
+  id           String   @id @default(cuid())
+  reporterId   String
+  reportedId   String
+  type         String   // user, content, behavior, etc.
+  reason       String
+  description  String   @db.Text
+  evidence     Json?    // JSON array of evidence URLs
+  status       String   @default("pending") // pending, reviewing, resolved, dismissed
+  resolution   String?  @db.Text
+  resolvedBy   String?
+  resolvedAt   DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  // Relations
+  reporter     User     @relation("Reporter", fields: [reporterId], references: [id])
+  reported     User     @relation("Reported", fields: [reportedId], references: [id])
+}
