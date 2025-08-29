@@ -79,7 +79,7 @@ export default function RegisterPage() {
           router.push("/login")
         }
       }
-    } catch (err) {
+    } catch {
       setError("An unexpected error occurred")
     } finally {
       setIsLoading(false)

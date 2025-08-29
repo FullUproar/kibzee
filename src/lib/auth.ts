@@ -9,7 +9,8 @@ import { prisma } from "@/lib/prisma"
 import { UserRole, UserStatus } from "@prisma/client"
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma) as any,
+  // @ts-expect-error - PrismaAdapter types are not fully compatible with NextAuth
+  adapter: PrismaAdapter(prisma),
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
@@ -91,7 +92,7 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user, account }) {
       if (user) {
         token.id = user.id
-        token.role = (user as any).role || UserRole.STUDENT
+        token.role = (user as { role?: UserRole }).role || UserRole.STUDENT
       }
       
       if (account) {
@@ -137,7 +138,7 @@ export const authOptions: NextAuthOptions = {
             data: {
               email: user.email!,
               name: user.name || profile?.name || "",
-              image: user.image || (profile as any)?.picture || null,
+              image: user.image || (profile as { picture?: string })?.picture || null,
               emailVerified: new Date(),
               status: UserStatus.ACTIVE,
               role: UserRole.STUDENT,
