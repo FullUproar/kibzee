@@ -12,7 +12,7 @@ interface NavItem {
 }
 
 interface DashboardNavProps {
-  userRole: "STUDENT" | "TEACHER" | "ADMIN" | "SUPPORT"
+  userRole: "USER" | "FOUNDER_CURATOR" | "COMMUNITY_CURATOR" | "ADMIN"
   userName?: string | null
   userImage?: string | null
 }
@@ -21,41 +21,49 @@ export default function DashboardNav({ userRole, userName, userImage }: Dashboar
   const pathname = usePathname()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
-  const studentNavItems: NavItem[] = [
+  const userNavItems: NavItem[] = [
     { label: "Dashboard", href: "/dashboard", icon: "🏠" },
-    { label: "Find Teachers", href: "/teachers", icon: "🔍" },
-    { label: "My Lessons", href: "/dashboard/lessons", icon: "📚" },
-    { label: "Messages", href: "/dashboard/messages", icon: "💬" },
-    { label: "Settings", href: "/settings", icon: "⚙️" },
+    { label: "Events", href: "/events", icon: "📅" },
+    { label: "Concierge", href: "/concierge", icon: "💬" },
+    { label: "Saved", href: "/dashboard/saved", icon: "❤️" },
+    { label: "Preferences", href: "/dashboard/preferences", icon: "⚙️" },
+    { label: "Become a Curator", href: "/curator/apply", icon: "✨" },
+    { label: "Settings", href: "/settings", icon: "👤" },
   ]
 
-  const teacherNavItems: NavItem[] = [
+  const curatorNavItems: NavItem[] = [
     { label: "Dashboard", href: "/dashboard", icon: "🏠" },
-    { label: "My Students", href: "/dashboard/students", icon: "👥" },
-    { label: "Schedule", href: "/dashboard/schedule", icon: "📅" },
-    { label: "Earnings", href: "/dashboard/earnings", icon: "💰" },
-    { label: "Messages", href: "/dashboard/messages", icon: "💬" },
-    { label: "Profile", href: "/dashboard/profile", icon: "👤" },
-    { label: "Settings", href: "/settings", icon: "⚙️" },
+    { label: "Events", href: "/events", icon: "📅" },
+    { label: "Concierge", href: "/concierge", icon: "💬" },
+    { label: "Curator Hub", href: "/curator", icon: "✨" },
+    { label: "Add Event", href: "/curator/events/new", icon: "➕" },
+    { label: "Saved", href: "/dashboard/saved", icon: "❤️" },
+    { label: "Settings", href: "/settings", icon: "👤" },
   ]
 
   const adminNavItems: NavItem[] = [
-    { label: "Dashboard", href: "/admin", icon: "🏠" },
-    { label: "Users", href: "/admin/users", icon: "👥" },
-    { label: "Teachers", href: "/admin/teachers", icon: "🎓" },
-    { label: "Bookings", href: "/admin/bookings", icon: "📅" },
-    { label: "Payments", href: "/admin/payments", icon: "💳" },
-    { label: "Reports", href: "/admin/reports", icon: "📊" },
-    { label: "Settings", href: "/admin/settings", icon: "⚙️" },
+    { label: "Admin Dashboard", href: "/admin", icon: "🛡️" },
+    { label: "Browse Events", href: "/events", icon: "📅" },
+    { label: "Concierge", href: "/concierge", icon: "💬" },
+    { label: "Curator Hub", href: "/curator", icon: "✨" },
+    { label: "Add Event", href: "/curator/events/new", icon: "➕" },
+    { label: "Settings", href: "/settings", icon: "⚙️" },
   ]
 
-  const navItems = 
-    userRole === "TEACHER" ? teacherNavItems : 
-    userRole === "ADMIN" ? adminNavItems : 
-    studentNavItems
+  const isCurator = userRole === "FOUNDER_CURATOR" || userRole === "COMMUNITY_CURATOR"
+  const navItems =
+    userRole === "ADMIN" ? adminNavItems :
+    isCurator ? curatorNavItems :
+    userNavItems
+
+  const roleLabel =
+    userRole === "ADMIN" ? "Admin" :
+    userRole === "FOUNDER_CURATOR" ? "Founder Curator" :
+    userRole === "COMMUNITY_CURATOR" ? "Curator" :
+    "Member"
 
   const isActive = (href: string) => {
-    if (href === "/dashboard") {
+    if (href === "/dashboard" || href === "/admin") {
       return pathname === href
     }
     return pathname.startsWith(href)
@@ -108,7 +116,7 @@ export default function DashboardNav({ userRole, userName, userImage }: Dashboar
             )}
             <div className="flex-1">
               <p className="font-medium text-sm">{userName || "User"}</p>
-              <p className="text-xs text-gray-500 capitalize">{userRole.toLowerCase()}</p>
+              <p className="text-xs text-gray-500">{roleLabel}</p>
             </div>
           </div>
           <button

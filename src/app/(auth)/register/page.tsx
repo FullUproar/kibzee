@@ -13,7 +13,6 @@ const registerSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
   confirmPassword: z.string(),
-  role: z.enum(["STUDENT", "TEACHER"]),
   termsAccepted: z.boolean().refine((val) => val === true, {
     message: "You must accept the terms and conditions",
   }),
@@ -28,18 +27,13 @@ export default function RegisterPage() {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [selectedRole, setSelectedRole] = useState<"STUDENT" | "TEACHER">("STUDENT")
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-    setValue,
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
-    defaultValues: {
-      role: "STUDENT",
-    },
   })
 
   const onSubmit = async (data: RegisterFormData) => {
@@ -56,7 +50,6 @@ export default function RegisterPage() {
           name: data.name,
           email: data.email,
           password: data.password,
-          role: data.role,
         }),
       })
 
@@ -73,7 +66,7 @@ export default function RegisterPage() {
         })
 
         if (signInResult?.ok) {
-          router.push("/onboarding")
+          router.push("/dashboard")
           router.refresh()
         } else {
           router.push("/login")
@@ -86,11 +79,6 @@ export default function RegisterPage() {
     }
   }
 
-  const handleRoleSelect = (role: "STUDENT" | "TEACHER") => {
-    setSelectedRole(role)
-    setValue("role", role)
-  }
-
   return (
     <div className="animate-in">
       <div className="text-center mb-8">
@@ -100,7 +88,7 @@ export default function RegisterPage() {
           </h1>
         </Link>
         <h2 className="text-2xl font-serif mb-2">Create your account</h2>
-        <p className="text-gray-600">Join our community of music lovers</p>
+        <p className="text-gray-600">Discover local arts and culture</p>
       </div>
 
       <div className="card p-8">
@@ -110,38 +98,6 @@ export default function RegisterPage() {
               {error}
             </div>
           )}
-
-          <div>
-            <label className="block text-sm font-medium mb-3">
-              I want to...
-            </label>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => handleRoleSelect("STUDENT")}
-                className={`p-4 border rounded-subtle transition-all ${
-                  selectedRole === "STUDENT"
-                    ? "border-sage bg-sage/10 text-sage"
-                    : "border-gray-300 hover:border-gray-400"
-                }`}
-              >
-                <div className="font-medium">Learn Music</div>
-                <div className="text-xs mt-1 text-gray-600">Find teachers near me</div>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleRoleSelect("TEACHER")}
-                className={`p-4 border rounded-subtle transition-all ${
-                  selectedRole === "TEACHER"
-                    ? "border-sage bg-sage/10 text-sage"
-                    : "border-gray-300 hover:border-gray-400"
-                }`}
-              >
-                <div className="font-medium">Teach Music</div>
-                <div className="text-xs mt-1 text-gray-600">Share my expertise</div>
-              </button>
-            </div>
-          </div>
 
           <div>
             <label htmlFor="name" className="block text-sm font-medium mb-2">
@@ -256,7 +212,7 @@ export default function RegisterPage() {
 
           <div className="mt-6 grid grid-cols-3 gap-3">
             <button
-              onClick={() => signIn("google", { callbackUrl: "/onboarding" })}
+              onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
               disabled={isLoading}
               className="flex justify-center items-center px-4 py-2 border border-gray-300 rounded-subtle hover:bg-gray-50 transition-colors"
             >
@@ -282,7 +238,7 @@ export default function RegisterPage() {
             </button>
 
             <button
-              onClick={() => signIn("facebook", { callbackUrl: "/onboarding" })}
+              onClick={() => signIn("facebook", { callbackUrl: "/dashboard" })}
               disabled={isLoading}
               className="flex justify-center items-center px-4 py-2 border border-gray-300 rounded-subtle hover:bg-gray-50 transition-colors"
             >
@@ -293,7 +249,7 @@ export default function RegisterPage() {
             </button>
 
             <button
-              onClick={() => signIn("apple", { callbackUrl: "/onboarding" })}
+              onClick={() => signIn("apple", { callbackUrl: "/dashboard" })}
               disabled={isLoading}
               className="flex justify-center items-center px-4 py-2 border border-gray-300 rounded-subtle hover:bg-gray-50 transition-colors"
             >

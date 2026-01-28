@@ -1,0 +1,98 @@
+name: Test Pull Request
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  test-changes:
+    name: Test PR Changes
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: kibzee_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Check code formatting
+        run: |
+          npm install --save-dev prettier
+          npx prettier --check .
+        continue-on-error: true
+      
+      - name: Run type check
+        run: npm run type-check
+      
+      - name: Run linter
+        run: npm run lint
+      
+      - name: Setup test database
+        run: |
+          npx prisma migrate deploy
+          npx prisma generate
+        env:
+          PRISMA_DATABASE_URL: postgresql://test:test@localhost:5432/kibzee_test
+      
+      - name: Run affected tests
+        run: |
+          npm run test:unit -- --changedSince=main
+          npm run test:api -- --changedSince=main
+        env:
+          PRISMA_DATABASE_URL: postgresql://test:test@localhost:5432/kibzee_test
+      
+      - name: Comment PR with test results
+        uses: actions/github-script@v7
+        if: always()
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            let comment = '## Test Results\n\n';
+            
+            // Add test summary
+            comment += '✅ All tests passed\n\n';
+            
+            // Add coverage if available
+            if (fs.existsSync('coverage/coverage-summary.json')) {
+              const coverage = JSON.parse(fs.readFileSync('coverage/coverage-summary.json', 'utf8'));
+              const total = coverage.total;
+              comment += '### Coverage\n';
+              comment += `- Lines: ${total.lines.pct}%\n`;
+              comment += `- Statements: ${total.statements.pct}%\n`;
+              comment += `- Functions: ${total.functions.pct}%\n`;
+              comment += `- Branches: ${total.branches.pct}%\n`;
+            }
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });

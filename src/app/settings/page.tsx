@@ -5,7 +5,7 @@ import SettingsTabs from "@/components/settings/settings-tabs"
 
 export default async function SettingsPage() {
   const session = await auth()
-  
+
   if (!session?.user) {
     redirect("/login")
   }
@@ -13,8 +13,8 @@ export default async function SettingsPage() {
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     include: {
-      studentProfile: true,
-      teacherProfile: true
+      preferences: true,
+      curatorProfile: true
     }
   })
 

@@ -1,16 +1,15 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import AuthSessionProvider from "@/components/providers/session-provider";
-import LaunchBanner from "@/components/ui/launch-banner";
 
 export const metadata: Metadata = {
-  title: "Kibzee - Where Music Lives",
-  description: "Connect with passionate music instructors in your neighborhood. Learn guitar, piano, and more with trusted local teachers.",
-  keywords: "music lessons, music teachers, learn music, guitar lessons, piano lessons, local instructors",
+  title: "Kibzee - Discover Local Arts & Culture",
+  description: "Find concerts, theater, gallery openings, and more in Michiana. Curated by locals who love the arts.",
+  keywords: "events, concerts, theater, art, culture, South Bend, Mishawaka, Michiana",
   authors: [{ name: "Kibzee" }],
   openGraph: {
-    title: "Kibzee - Where Music Lives",
-    description: "Connect with passionate music instructors in your neighborhood.",
+    title: "Kibzee - Discover Local Arts & Culture",
+    description: "Find concerts, theater, gallery openings, and more in Michiana.",
     url: "https://kibzee.com",
     siteName: "Kibzee",
     type: "website",
@@ -26,7 +25,6 @@ export default function RootLayout({
     <html lang="en">
       <body className="antialiased">
         <AuthSessionProvider>
-          <LaunchBanner />
           {children}
         </AuthSessionProvider>
       </body>

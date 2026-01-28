@@ -13,7 +13,7 @@ export const authConfig: NextAuthConfig = {
     signOut: "/",
     error: "/login",
     verifyRequest: "/verify-email",
-    newUser: "/onboarding",
+    newUser: "/dashboard",
   },
   providers: [
     CredentialsProvider({
@@ -85,7 +85,7 @@ export const authConfig: NextAuthConfig = {
     async jwt({ token, user, account }) {
       if (user) {
         token.id = user.id
-        token.role = (user as { role?: UserRole }).role || UserRole.STUDENT
+        token.role = (user as { role?: UserRole }).role || UserRole.USER
       }
       
       if (account) {
@@ -134,7 +134,7 @@ export const authConfig: NextAuthConfig = {
               image: user.image || (profile as { picture?: string })?.picture || null,
               emailVerified: new Date(),
               status: UserStatus.ACTIVE,
-              role: UserRole.STUDENT,
+              role: UserRole.USER,
               lastLoginAt: new Date()
             }
           })

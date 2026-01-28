@@ -12,25 +12,19 @@ const publicRoutes = [
   "/api/auth",
   "/terms",
   "/privacy",
+  "/events",      // Event browsing is public
+  "/venues",      // Venue pages are public
+  "/artists",     // Artist pages are public
+  "/about",       // About page
 ]
 
-// Define role-based route access (for future use)
-// const teacherOnlyRoutes = [
-//   "/dashboard/teacher",
-//   "/dashboard/lessons",
-//   "/dashboard/earnings",
-//   "/settings/teacher-profile",
-//   "/settings/availability",
-//   "/settings/rates",
+// Routes that require curator role (FOUNDER_CURATOR or COMMUNITY_CURATOR)
+// const curatorRoutes = [
+//   "/curator",
 // ]
 
-// const studentOnlyRoutes = [
-//   "/dashboard/student",
-//   "/dashboard/my-lessons",
-//   "/dashboard/progress",
-// ]
-
-// const adminOnlyRoutes = [
+// Routes that require admin role
+// const adminRoutes = [
 //   "/admin",
 // ]
 
@@ -43,7 +37,7 @@ export function middleware(request: NextRequest) {
   }
 
   // Check for auth cookie (NextAuth v5 uses sessionToken)
-  const sessionToken = request.cookies.get("authjs.session-token") || 
+  const sessionToken = request.cookies.get("authjs.session-token") ||
                        request.cookies.get("__Secure-authjs.session-token")
 
   // Redirect to login if no session
@@ -54,7 +48,7 @@ export function middleware(request: NextRequest) {
   }
 
   // For now, allow authenticated users to access protected routes
-  // TODO: Add role-based access control after implementing session retrieval
+  // TODO: Add role-based access control for curator and admin routes
   return NextResponse.next()
 }
 
